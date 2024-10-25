@@ -34,4 +34,10 @@
   flex-direction: column;
 }
 
+.app_signinImage{
+  width: 150px;
+  height: auto;
+  object-fit: contain;
+}
+
 

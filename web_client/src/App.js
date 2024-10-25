@@ -148,7 +148,7 @@ function App() {
           <form className="app_signin">
             <center>
               <img
-                className="app_headerImage"
+                className="app_signinImage"
                 src="https://www.virtualstacks.com/wp-content/uploads/2019/11/instagram-logo-name.png"
                 alt="Instagram"
               />
