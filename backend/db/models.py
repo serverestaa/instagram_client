@@ -1,16 +1,16 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy.sql.schema import ForeignKey
+from .database import Base
+from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import relationship
-
-from db.database import Base
 
 
 class DbUser(Base):
-    __tablename__ = 'user'
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String)
-    email = Column(String)
-    password = Column(String)
-    items = relationship('DbPost', back_populates='user')
+  __tablename__ = 'user'
+  id = Column(Integer, primary_key=True, index=True)
+  username = Column(String)
+  email = Column(String)
+  password = Column(String)
+  items = relationship('DbPost', back_populates='user')
 
 
 class DbPost(Base):
