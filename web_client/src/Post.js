@@ -1,26 +1,25 @@
-import React, {useState, useEffect} from "react";
-import './Post.css'
-import { Avatar, Button } from "@material-ui/core";
+import React, { useState, useEffect } from 'react';
+import './Post.css';
+import { Avatar, Button } from '@mui/material';
 
-const BASE_URL = 'http://localhost:8000/'
-
-function Post({ post, authToken, authTokenType, username }) {
+const BASE_URL = 'http://localhost:8000/';
+function Post({ post, authToken, authTokenType, username, setPosts }) {
 
   const [imageUrl, setImageUrl] = useState('')
   const [comments, setComments] = useState([])
   const [newComment, setNewComment] = useState('')
 
   useEffect(() => {
-    if (post.image_url_type == 'absolute') {
+    if (post.image_url_type === 'absolute') {
       setImageUrl(post.image_url)
     } else {
       setImageUrl(BASE_URL + post.image_url)
     }
-  }, [])
+  }, [post.image_url, post.image_url_type]);
 
   useEffect(() => {
     setComments(post.comments)
-  }, [])
+  }, [post.comments]);
 
   const handleDelete = (event) => {
     event?.preventDefault();
@@ -35,7 +34,7 @@ function Post({ post, authToken, authTokenType, username }) {
     fetch(BASE_URL + 'post/delete/' + post.id, requestOptions)
       .then(response => {
         if (response.ok) {
-          window.location.reload()
+          setPosts(prevPosts => prevPosts.filter(p => p.id !== post.id));
         }
         throw response
       })
@@ -148,4 +147,4 @@ function Post({ post, authToken, authTokenType, username }) {
   )
 }
 
-export default Post
+export default Post;

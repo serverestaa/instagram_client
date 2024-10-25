@@ -24,11 +24,15 @@
 }
 
 .app_headerImage {
-  object-fit: contain;
-  width: 200px;
+  max-width: 50%; /* Убедитесь, что изображение не выходит за границы контейнера */
+  height: auto; /* Сохраняет пропорции изображения */
+  max-height: 5250px; /* Установите максимальную высоту */
+  object-fit: cover;
 }
 
 .app_signin {
   display: flex;
   flex-direction: column;
 }
+
+

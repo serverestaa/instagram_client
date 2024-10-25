@@ -1,10 +1,10 @@
 import React, {useState} from 'react';
-import {Button} from '@material-ui/core'
+import {Button} from '@mui/material'
 import './ImageUpload.css'
 
 const BASE_URL = 'http://localhost:8000/'
 
-function ImageUpload({authToken, authTokenType, userId}) {
+function ImageUpload({authToken, authTokenType, userId, setPosts}) {
   const [caption, setCaption] = useState('');
   const [image, setImage] = useState(null);
 
@@ -73,9 +73,9 @@ function ImageUpload({authToken, authTokenType, userId}) {
         }
         throw response
       })
-      .then(data => {
-        window.location.reload()
-        window.scrollTo(0, 0)
+      .then(newPost => {
+        setPosts(prevPosts => [newPost, ...prevPosts]);
+        window.scrollTo(0, 0);
       })
       .catch(error => {
         console.log(error);

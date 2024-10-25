@@ -1,11 +1,13 @@
-import { Button, Modal, makeStyles, Input } from '@material-ui/core';
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
+import { Button, Modal, Input } from '@mui/material';
+import { makeStyles } from '@mui/styles';
 import './App.css';
 import Post from './Post';
 import ImageUpload from './ImageUpload';
 
-const BASE_URL = 'http://localhost:8000/'
+const BASE_URL = 'http://localhost:8000/';
 
+// Стиль для модального окна
 function getModalStyle() {
   const top = 50;
   const left = 50;
@@ -17,266 +19,199 @@ function getModalStyle() {
   };
 }
 
+// Стили с использованием `makeStyles`
 const useStyles = makeStyles((theme) => ({
   paper: {
-    backgroundColor: theme.palette.background.paper,
+    backgroundColor: theme.palette.background.paper || '#fff', // Устанавливаем белый цвет как запасной
     position: 'absolute',
     width: 400,
     border: '2px solid #000',
     boxShadow: theme.shadows[5],
-    padding: theme.spacing(2, 4, 3)
-  }
-}))
+    padding: theme.spacing(2, 4, 3),
+  },
+}));
 
 function App() {
   const classes = useStyles();
-
   const [posts, setPosts] = useState([]);
   const [openSignIn, setOpenSignIn] = useState(false);
   const [openSignUp, setOpenSignUp] = useState(false);
-  const [modalStyle, setModalStyle] = useState(getModalStyle)
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [authToken, setAuthToken] = useState(null)
+  const [modalStyle] = useState(getModalStyle);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [authToken, setAuthToken] = useState(null);
   const [authTokenType, setAuthTokenType] = useState(null);
   const [userId, setUserId] = useState('');
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState('');
 
+  // Инициализация токенов из локального хранилища
   useEffect(() => {
     setAuthToken(window.localStorage.getItem('authToken'));
-    setAuthTokenType(window.localStorage.getItem('authTokenType'))
-    setUsername(window.localStorage.getItem('username'))
-    setUserId(window.localStorage.getItem('userId'))
-  }, [])
+    setAuthTokenType(window.localStorage.getItem('authTokenType'));
+    setUsername(window.localStorage.getItem('username'));
+    setUserId(window.localStorage.getItem('userId'));
+  }, []);
 
   useEffect(() => {
     authToken
       ? window.localStorage.setItem('authToken', authToken)
-      : window.localStorage.removeItem('authToken')
+      : window.localStorage.removeItem('authToken');
     authTokenType
       ? window.localStorage.setItem('authTokenType', authTokenType)
-      : window.localStorage.removeItem('authTokenType')
+      : window.localStorage.removeItem('authTokenType');
     username
       ? window.localStorage.setItem('username', username)
-      : window.localStorage.removeItem('username')
+      : window.localStorage.removeItem('username');
     userId
       ? window.localStorage.setItem('userId', userId)
-      : window.localStorage.removeItem('userId')
+      : window.localStorage.removeItem('userId');
+  }, [authToken, authTokenType, username, userId]);
 
-  }, [authToken, authTokenType, userId])
-
+  // Получение постов с сервера
   useEffect(() => {
     fetch(BASE_URL + 'post/all')
-      .then(response => {
-        const json = response.json()
-        console.log(json);
-        if (response.ok) {
-          return json
-        }
-        throw response
+      .then((response) => {
+        if (!response.ok) throw new Error('Failed to fetch posts');
+        return response.json();
       })
-      .then(data => {
-        const result = data.sort((a, b) => {
-          const t_a = a.timestamp.split(/[-T:]/);
-          const t_b = b.timestamp.split(/[-T:]/);
-          const d_a = new Date(Date.UTC(t_a[0], t_a[1]-1, t_a[2], t_a[3], t_a[4], t_a[5]));
-          const d_b = new Date(Date.UTC(t_b[0], t_b[1]-1, t_b[2], t_b[3], t_b[4], t_b[5]));
-          return d_b - d_a
-        })
-        return result
+      .then((data) => {
+        const sortedPosts = data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        setPosts(sortedPosts);
       })
-      .then(data => {
-        setPosts(data)
-      })
-      .catch(error => {
-        console.log(error);
-        alert(error)
-      })
-  }, [])
+      .catch((error) => {
+        console.error(error);
+        alert('Error fetching posts');
+      });
+  }, []);
 
+  // Авторизация пользователя
   const signIn = (event) => {
     event?.preventDefault();
-
-    let formData = new FormData();
+    const formData = new FormData();
     formData.append('username', username);
     formData.append('password', password);
 
-    const requestOptions = {
-      method: 'POST',
-      body: formData
-    }
-
-    fetch(BASE_URL + 'login', requestOptions)
-      .then(response => {
-        if (response.ok) {
-          return response.json()
-        }
-        throw response
+    fetch(BASE_URL + 'login', { method: 'POST', body: formData })
+      .then((response) => {
+        if (!response.ok) throw new Error('Failed to sign in');
+        return response.json();
       })
-      .then(data => {
-        console.log(data);
-        setAuthToken(data.access_token)
-        setAuthTokenType(data.token_type)
-        setUserId(data.user_id)
-        setUsername(data.username)
+      .then((data) => {
+        setAuthToken(data.access_token);
+        setAuthTokenType(data.token_type);
+        setUserId(data.user_id);
+        setUsername(data.username);
+        setOpenSignIn(false);
       })
-      .catch(error => {
-        console.log(error);
-        alert(error)
-      })
+      .catch((error) => {
+        console.error(error);
+        alert('Sign in failed');
+      });
+  };
 
-    setOpenSignIn(false);
-  }
+  // Выход пользователя
+  const signOut = () => {
+    setAuthToken(null);
+    setAuthTokenType(null);
+    setUserId('');
+    setUsername('');
+  };
 
-  const signOut = (event) => {
-    setAuthToken(null)
-    setAuthTokenType(null)
-    setUserId('')
-    setUsername('')
-  }
-
+  // Регистрация пользователя
   const signUp = (event) => {
     event?.preventDefault();
-
-    const json_string = JSON.stringify({
-      username: username,
-      email: email,
-      password: password
-    })
-
-    const requestOption = {
+    const requestOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: json_string
-    }
+      body: JSON.stringify({ username, email, password }),
+    };
 
-    fetch(BASE_URL + 'user/', requestOption)
-      .then(response => {
-        if (response.ok) {
-          return response.json()
-        }
-        throw response
+    fetch(BASE_URL + 'user/', requestOptions)
+      .then((response) => {
+        if (!response.ok) throw new Error('Failed to sign up');
+        return response.json();
       })
-      .then(data => {
-        // console.log(data);
+      .then(() => {
         signIn();
+        setOpenSignUp(false);
       })
-      .catch(error => {
-        console.log(error);
-        alert(error);
-      })
-
-
-    setOpenSignUp(false)
-  }
-
+      .catch((error) => {
+        console.error(error);
+        alert('Sign up failed');
+      });
+  };
 
   return (
     <div className="app">
+      <Modal open={openSignIn} onClose={() => setOpenSignIn(false)}>
+        <div style={modalStyle} className={classes.paper}>
+          <form className="app_signin">
+            <center>
+              <img
+                className="app_headerImage"
+                src="https://www.virtualstacks.com/wp-content/uploads/2019/11/instagram-logo-name.png"
+                alt="Instagram"
+              />
+            </center>
+            <Input placeholder="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
+            <Input placeholder="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <Button type="submit" onClick={signIn}>
+              Login
+            </Button>
+          </form>
+        </div>
+      </Modal>
 
-    <Modal
-      open={openSignIn}
-      onClose={() => setOpenSignIn(false)}>
-
-      <div style={modalStyle} className={classes.paper}>
-        <form className="app_signin">
-          <center>
-            <img className="app_headerImage"
-              src="https://i2.wp.com/mrvsdaily.com/wp-content/uploads/2018/02/new-instagram-text-logo.png"
-              alt="Instagram"/>
-          </center>
-          <Input
-            placeholder="username"
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)} />
-          <Input
-            placeholder="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)} />
-          <Button
-            type="submit"
-            onClick={signIn}>Login</Button>
-        </form>
-      </div>
-
-    </Modal>
-
-    <Modal
-      open={openSignUp}
-      onClose={() => setOpenSignUp(false)}>
-
-      <div style={modalStyle} className={classes.paper}>
-        <form className="app_signin">
-          <center>
-            <img className="app_headerImage"
-              src="https://i2.wp.com/mrvsdaily.com/wp-content/uploads/2018/02/new-instagram-text-logo.png"
-              alt="Instagram"/>
-          </center>
-          <Input
-            placeholder="username"
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)} />
-          <Input
-            placeholder="email"
-            type="text"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)} />
-          <Input
-            placeholder="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)} />
-          <Button
-            type="submit"
-            onClick={signUp}>Sign up</Button>
-        </form>
-      </div>
-
-    </Modal>
+      <Modal open={openSignUp} onClose={() => setOpenSignUp(false)}>
+        <div style={modalStyle} className={classes.paper}>
+          <form className="app_signin">
+            <center>
+              <img
+                className="app_headerImage"
+                src="https://www.virtualstacks.com/wp-content/uploads/2019/11/instagram-logo-name.png"
+                alt="Instagram"
+              />
+            </center>
+            <Input placeholder="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
+            <Input placeholder="email" type="text" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input placeholder="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <Button type="submit" onClick={signUp}>
+              Sign up
+            </Button>
+          </form>
+        </div>
+      </Modal>
 
       <div className="app_header">
-        <img className="app_headerImage"
-          src="https://i2.wp.com/mrvsdaily.com/wp-content/uploads/2018/02/new-instagram-text-logo.png"
-          alt="Instagram"/>
-        
+        <img className="app_headerImage" src="https://raw.githubusercontent.com/loganmarchione/homelab-svg-assets/745e5d9249f2c847d58de5f1fd7ba4de2f63918e/assets/instagram.svg" alt="Instagram" />
         {authToken ? (
-            <Button onClick={() => signOut()}>Logout</Button>
-          ) : (
-            <div>
-              <Button onClick={() => setOpenSignIn(true)}>Login</Button>
-              <Button onClick={() => setOpenSignUp(true)}>Signup</Button>
-            </div>
-          )
-        }
+          <Button onClick={signOut}>Logout</Button>
+        ) : (
+          <div>
+            <Button onClick={() => setOpenSignIn(true)}>Login</Button>
+            <Button onClick={() => setOpenSignUp(true)}>Signup</Button>
+          </div>
+        )}
       </div>
 
       <div className="app_posts">
-        {
-          posts.map(post => (
-            <Post
-              post = {post}
-              authToken={authToken}
-              authTokenType={authTokenType}
-              username={username}
-            />
-          ))
-        }
-      </div>
-
-      {
-        authToken ? (
-          <ImageUpload
+        {posts.map((post) => (
+          <Post
+            key={post.id}
+            post={post}
             authToken={authToken}
             authTokenType={authTokenType}
-            userId={userId}
+            username={username}
+            setPosts={setPosts}  // Передаем setPosts как пропс
           />
-        ) : (
-          <h3>You need to login to upload</h3>
-        )
-      }
+        ))}
+      </div>
+
+      {authToken ? (
+        <ImageUpload authToken={authToken} authTokenType={authTokenType} userId={userId} setPosts={setPosts} />
+      ) : (
+        <h3>You need to login to upload</h3>
+      )}
     </div>
   );
 }
