@@ -31,6 +31,13 @@ def create(request: PostBase, db: Session = Depends(get_db), current_user: UserA
 def posts(db: Session = Depends(get_db)):
     return db_post.get_all(db)
 
+@router.get("/user/{user_id}", response_model=List[PostDisplay])
+def get_user_posts(user_id: int, db: Session = Depends(get_db)):
+    posts = db_post.get_posts_by_user_id(db, user_id=user_id)
+    if posts is None:
+        raise HTTPException(status_code=404, detail="Posts not found")
+    return posts
+
 
 @router.post('/image')
 def upload_image(image: UploadFile = File(...), current_user: UserAuth = Depends(get_current_user)):

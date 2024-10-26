@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Modal, Input } from '@mui/material';
+import { Button, Modal, Input, Menu, MenuItem, Avatar } from '@mui/material';
 import { makeStyles } from '@mui/styles';
+import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import './App.css';
 import Post from './Post';
 import ImageUpload from './ImageUpload';
+import Profile from './Profile';
 
 const BASE_URL = 'http://localhost:8000/';
 
-// Стиль для модального окна
 function getModalStyle() {
   const top = 50;
   const left = 50;
@@ -19,10 +20,9 @@ function getModalStyle() {
   };
 }
 
-// Стили с использованием `makeStyles`
 const useStyles = makeStyles((theme) => ({
   paper: {
-    backgroundColor: theme.palette.background.paper || '#fff', // Устанавливаем белый цвет как запасной
+    backgroundColor: theme.palette.background.paper || '#fff',
     position: 'absolute',
     width: 400,
     border: '2px solid #000',
@@ -44,7 +44,9 @@ function App() {
   const [userId, setUserId] = useState('');
   const [email, setEmail] = useState('');
 
-  // Инициализация токенов из локального хранилища
+  // State for profile menu
+  const [anchorEl, setAnchorEl] = useState(null);
+
   useEffect(() => {
     setAuthToken(window.localStorage.getItem('authToken'));
     setAuthTokenType(window.localStorage.getItem('authTokenType'));
@@ -67,7 +69,6 @@ function App() {
       : window.localStorage.removeItem('userId');
   }, [authToken, authTokenType, username, userId]);
 
-  // Получение постов с сервера
   useEffect(() => {
     fetch(BASE_URL + 'post/all')
       .then((response) => {
@@ -84,7 +85,6 @@ function App() {
       });
   }, []);
 
-  // Авторизация пользователя
   const signIn = (event) => {
     event?.preventDefault();
     const formData = new FormData();
@@ -109,15 +109,14 @@ function App() {
       });
   };
 
-  // Выход пользователя
   const signOut = () => {
     setAuthToken(null);
     setAuthTokenType(null);
     setUserId('');
     setUsername('');
+    setAnchorEl(null);
   };
 
-  // Регистрация пользователя
   const signUp = (event) => {
     event?.preventDefault();
     const requestOptions = {
@@ -141,76 +140,108 @@ function App() {
       });
   };
 
+  const handleProfileMenu = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+  };
+
   return (
-    <div className="app">
-      <Modal open={openSignIn} onClose={() => setOpenSignIn(false)}>
-        <div style={modalStyle} className={classes.paper}>
-          <form className="app_signin">
-            <center>
-              <img
-                className="app_signinImage"
-                src="https://www.virtualstacks.com/wp-content/uploads/2019/11/instagram-logo-name.png"
-                alt="Instagram"
-              />
-            </center>
-            <Input placeholder="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
-            <Input placeholder="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            <Button type="submit" onClick={signIn}>
-              Login
-            </Button>
-          </form>
-        </div>
-      </Modal>
-
-      <Modal open={openSignUp} onClose={() => setOpenSignUp(false)}>
-        <div style={modalStyle} className={classes.paper}>
-          <form className="app_signin">
-            <center>
-              <img
-                className="app_headerImage"
-                src="https://www.virtualstacks.com/wp-content/uploads/2019/11/instagram-logo-name.png"
-                alt="Instagram"
-              />
-            </center>
-            <Input placeholder="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
-            <Input placeholder="email" type="text" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <Input placeholder="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            <Button type="submit" onClick={signUp}>
-              Sign up
-            </Button>
-          </form>
-        </div>
-      </Modal>
-
-      <div className="app_header">
-        <img className="app_headerImage" src="https://raw.githubusercontent.com/loganmarchione/homelab-svg-assets/745e5d9249f2c847d58de5f1fd7ba4de2f63918e/assets/instagram.svg" alt="Instagram" />
-        {authToken ? (
-          <Button onClick={signOut}>Logout</Button>
-        ) : (
-          <div>
-            <Button onClick={() => setOpenSignIn(true)}>Login</Button>
-            <Button onClick={() => setOpenSignUp(true)}>Signup</Button>
+    <Router>
+      <div className="app">
+        <Modal open={openSignIn} onClose={() => setOpenSignIn(false)}>
+          <div style={modalStyle} className={classes.paper}>
+            <form className="app_signin">
+              <center>
+                <img
+                  className="app_signinImage"
+                  src="https://www.virtualstacks.com/wp-content/uploads/2019/11/instagram-logo-name.png"
+                  alt="Instagram"
+                />
+              </center>
+              <Input placeholder="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
+              <Input placeholder="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <Button type="submit" onClick={signIn}>Login</Button>
+            </form>
           </div>
-        )}
-      </div>
+        </Modal>
 
-      <div className="app_posts">
-        {posts.map((post) => (
-          <Post
-            key={post.id}
-            post={post}
-            authToken={authToken}
-            authTokenType={authTokenType}
-            username={username}
-            setPosts={setPosts}  // Передаем setPosts как пропс
+        <Modal open={openSignUp} onClose={() => setOpenSignUp(false)}>
+          <div style={modalStyle} className={classes.paper}>
+            <form className="app_signin">
+              <center>
+                <img
+                  className="app_headerImage"
+                  src="https://www.virtualstacks.com/wp-content/uploads/2019/11/instagram-logo-name.png"
+                  alt="Instagram"
+                />
+              </center>
+              <Input placeholder="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
+              <Input placeholder="email" type="text" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input placeholder="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <Button type="submit" onClick={signUp}>Sign up</Button>
+            </form>
+          </div>
+        </Modal>
+
+        <div className="app_header">
+          <Link to="/">
+            <img className="app_headerImage" src="https://raw.githubusercontent.com/loganmarchione/homelab-svg-assets/745e5d9249f2c847d58de5f1fd7ba4de2f63918e/assets/instagram.svg" alt="Instagram" />
+          </Link>
+          {authToken ? (
+            <div>
+              <Avatar onClick={handleProfileMenu} src="path_to_profile_picture.jpg" alt="Profile" />
+              <Menu
+                anchorEl={anchorEl}
+                keepMounted
+                open={Boolean(anchorEl)}
+                onClose={handleCloseMenu}
+              >
+                <Link to="/profile">
+                  <MenuItem onClick={handleCloseMenu}>Profile</MenuItem>
+                </Link>
+                <MenuItem onClick={signOut}>Logout</MenuItem>
+              </Menu>
+            </div>
+          ) : (
+            <div>
+              <Button onClick={() => setOpenSignIn(true)}>Login</Button>
+              <Button onClick={() => setOpenSignUp(true)}>Signup</Button>
+            </div>
+          )}
+        </div>
+
+        <Routes>
+          <Route
+            path="/"
+            element={<HomePage posts={posts} authToken={authToken} authTokenType={authTokenType} userId={userId} setPosts={setPosts} />}
           />
-        ))}
+          <Route
+            path="/profile"
+            element={<Profile authToken={authToken} authTokenType={authTokenType} userId={userId} />}
+          />
+          <Route
+            path="/profile/:userId"
+            element={<Profile authToken={authToken} authTokenType={authTokenType} userId={userId} />}
+          />
+        </Routes>
       </div>
+    </Router>
+  );
+}
 
+function HomePage({ posts, authToken, authTokenType, userId, setPosts }) {
+  return (
+    <div className="app_posts">
+      {posts.map((post) => (
+        <Post key={post.id} post={post} authToken={authToken} authTokenType={authTokenType} setPosts={setPosts} />
+      ))}
       {authToken ? (
         <ImageUpload authToken={authToken} authTokenType={authTokenType} userId={userId} setPosts={setPosts} />
       ) : (
-        <h3>You need to login to upload</h3>
+        <h3>You need to log in to upload</h3>
       )}
     </div>
   );

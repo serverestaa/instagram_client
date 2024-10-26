@@ -35,3 +35,6 @@ def delete(db: Session, id: int, user_id: int):
     db.delete(post)
     db.commit()
     return 'ok'
+
+def get_posts_by_user_id(db: Session, user_id: int):
+    return db.query(DbPost).filter(DbPost.user_id == user_id).all()
