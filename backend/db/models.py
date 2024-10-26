@@ -33,3 +33,10 @@ class DbComment(Base):
     timestamp = Column(DateTime)
     post_id = Column(Integer, ForeignKey('post.id'))
     post = relationship("DbPost", back_populates="comments")
+
+
+class DbSubscription(Base):
+    __tablename__ = 'subscription'
+    id = Column(Integer, primary_key=True, index=True)
+    follower_id = Column(Integer, ForeignKey('user.id'))
+    followed_id = Column(Integer, ForeignKey('user.id'))
