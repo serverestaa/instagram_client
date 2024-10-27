@@ -1,6 +1,8 @@
+from datetime import datetime
+
 from sqlalchemy.sql.schema import ForeignKey
 from .database import Base
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from sqlalchemy.orm import relationship
 
 
@@ -14,6 +16,8 @@ class DbUser(Base):
     likes = relationship("DbLike", back_populates="user", cascade="all, delete-orphan")
     followers = relationship("DbSubscription", foreign_keys="[DbSubscription.followed_id]", back_populates="followed", cascade="all, delete-orphan")
     following = relationship("DbSubscription", foreign_keys="[DbSubscription.follower_id]", back_populates="follower", cascade="all, delete-orphan")
+    chat_participants = relationship("ChatParticipant", back_populates="user", cascade="all, delete-orphan")
+    messages = relationship("Message", back_populates="user", cascade="all, delete-orphan")
 
 class DbPost(Base):
     __tablename__ = 'post'
@@ -58,3 +62,38 @@ class DbLike(Base):
 
     user = relationship("DbUser", back_populates="likes")
     post = relationship("DbPost", back_populates="likes")
+
+
+class Chat(Base):
+    __tablename__ = 'chats'
+
+    id = Column(Integer, primary_key=True, index=True)
+    is_private = Column(Boolean, default=True)
+    name = Column(String, nullable=True)
+
+    participants = relationship("ChatParticipant", back_populates="chat", cascade="all, delete-orphan")
+    messages = relationship("Message", back_populates="chat", cascade="all, delete-orphan")
+
+
+class ChatParticipant(Base):
+    __tablename__ = 'chat_participants'
+
+    id = Column(Integer, primary_key=True, index=True)
+    chat_id = Column(Integer, ForeignKey('chats.id', ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey('user.id', ondelete="CASCADE"), nullable=False)
+
+    chat = relationship("Chat", back_populates="participants")
+    user = relationship("DbUser")
+
+
+class Message(Base):
+    __tablename__ = 'messages'
+
+    id = Column(Integer, primary_key=True, index=True)
+    chat_id = Column(Integer, ForeignKey('chats.id', ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey('user.id', ondelete="CASCADE"), nullable=False)
+    content = Column(String, nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+    chat = relationship("Chat", back_populates="messages")
+    user = relationship("DbUser")

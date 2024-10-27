@@ -2,7 +2,7 @@ from fastapi.security import OAuth2PasswordBearer
 from typing import Optional
 from datetime import datetime, timedelta
 from jose import jwt, JWTError
-from fastapi import HTTPException, Depends, status
+from fastapi import HTTPException, Depends, status, WebSocket
 from sqlalchemy.orm import Session
 from db.database import get_db
 from db import db_user
@@ -42,3 +42,17 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if user is None:
         raise credentials_exception
     return user
+
+
+async def get_websocket_user(websocket: WebSocket, db: Session = Depends(get_db)):
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token is missing")
+
+    try:
+        current_user = get_current_user(token=token, db=db)
+    except HTTPException:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        raise
+    return current_user
