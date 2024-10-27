@@ -71,5 +71,16 @@ class UserLike(BaseModel):
     user_id: int
     username: str
 
+
 class LikeListResponse(BaseModel):
     likes: List[UserLike]
+
+
+class FollowerDisplay(BaseModel):
+    user_id: int
+    username: str
+
+
+class FollowListResponse(BaseModel):
+    followers: List[FollowerDisplay]
+    following: List[FollowerDisplay]

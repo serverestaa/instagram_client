@@ -12,6 +12,8 @@ class DbUser(Base):
     password = Column(String)
     items = relationship('DbPost', back_populates='user')
     likes = relationship("DbLike", back_populates="user", cascade="all, delete-orphan")
+    followers = relationship("DbSubscription", foreign_keys="[DbSubscription.followed_id]", back_populates="followed", cascade="all, delete-orphan")
+    following = relationship("DbSubscription", foreign_keys="[DbSubscription.follower_id]", back_populates="follower", cascade="all, delete-orphan")
 
 class DbPost(Base):
     __tablename__ = 'post'
@@ -44,6 +46,8 @@ class DbSubscription(Base):
     follower_id = Column(Integer, ForeignKey('user.id'))
     followed_id = Column(Integer, ForeignKey('user.id'))
 
+    follower = relationship("DbUser", foreign_keys=[follower_id], back_populates="following")
+    followed = relationship("DbUser", foreign_keys=[followed_id], back_populates="followers")
 
 class DbLike(Base):
     __tablename__ = "likes"

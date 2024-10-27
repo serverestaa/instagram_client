@@ -72,3 +72,21 @@ def get_user_profile(db: Session, user_id: int):
         "posts_count": posts_count,
         "posts": [{"id": post.id, "caption": post.caption, "timestamp": post.timestamp} for post in user.items]
     }
+
+
+def get_following(db: Session, user_id: int):
+    return (
+        db.query(DbUser)
+        .join(DbSubscription, DbSubscription.followed_id == DbUser.id)
+        .filter(DbSubscription.follower_id == user_id)
+        .all()
+    )
+
+
+def get_followers(db: Session, user_id: int):
+    return (
+        db.query(DbUser)
+        .join(DbSubscription, DbSubscription.follower_id == DbUser.id)
+        .filter(DbSubscription.followed_id == user_id)
+        .all()
+    )
