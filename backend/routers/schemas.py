@@ -48,6 +48,7 @@ class PostDisplay(BaseModel):
     caption: str
     timestamp: datetime
     user: User
+    like_count: int
     comments: List[Comment]
 
     class Config():

@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from routers.schemas import PostBase
 from sqlalchemy.orm.session import Session
+from sqlalchemy.orm import joinedload
 from db.models import DbPost, DbLike, DbUser
 import datetime
 
@@ -36,8 +37,18 @@ def delete(db: Session, id: int, user_id: int):
     db.commit()
     return 'ok'
 
+
 def get_posts_by_user_id(db: Session, user_id: int):
     return db.query(DbPost).filter(DbPost.user_id == user_id).all()
+
+
+def get_post_by_id(db: Session, post_id: int):
+    return (
+        db.query(DbPost)
+        .options(joinedload(DbPost.likes).joinedload(DbLike.user))  # Загрузка лайков и пользователей, которые лайкнули
+        .filter(DbPost.id == post_id)
+        .first()
+    )
 
 
 def add_like(db: Session, user_id: int, post_id: int):
@@ -47,6 +58,7 @@ def add_like(db: Session, user_id: int, post_id: int):
     db.refresh(like)
     return like
 
+
 def remove_like(db: Session, user_id: int, post_id: int):
     like = db.query(DbLike).filter(DbLike.user_id == user_id, DbLike.post_id == post_id).first()
     if like:
@@ -54,11 +66,14 @@ def remove_like(db: Session, user_id: int, post_id: int):
         db.commit()
     return like
 
+
 def get_like_count(db: Session, post_id: int):
     return db.query(DbLike).filter(DbLike.post_id == post_id).count()
 
+
 def user_has_liked(db: Session, user_id: int, post_id: int):
     return db.query(DbLike).filter(DbLike.user_id == user_id, DbLike.post_id == post_id).first() is not None
+
 
 def get_likes_for_post(db: Session, post_id: int):
     return (

@@ -2,7 +2,7 @@ from auth.oauth2 import get_current_user
 from fastapi import APIRouter, Depends, status, UploadFile, File
 from fastapi.exceptions import HTTPException
 from sqlalchemy.orm import Session
-from routers.schemas import PostBase, PostDisplay, LikeListResponse
+from routers.schemas import PostBase, PostDisplay
 from db.database import get_db
 from db import db_post
 from typing import List
@@ -38,6 +38,13 @@ def get_user_posts(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Posts not found")
     return posts
 
+@router.get("/{post_id}", response_model=PostDisplay)
+def get_post_detail(post_id: int, db: Session = Depends(get_db)):
+    post = db_post.get_post_by_id(db, post_id)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return post
+
 
 @router.post('/image')
 def upload_image(image: UploadFile = File(...), current_user: UserAuth = Depends(get_current_user)):
@@ -58,25 +65,3 @@ def upload_image(image: UploadFile = File(...), current_user: UserAuth = Depends
 @router.get('/delete/{id}')
 def delete(id: int, db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
     return db_post.delete(db, id, current_user.id)
-
-@router.post("/{post_id}/like")
-def like_post(post_id: int, user_id: int, db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
-    if db_post.user_has_liked(db, user_id, post_id):
-        raise HTTPException(status_code=400, detail="User has already liked this post.")
-    return db_post.add_like(db, user_id, post_id)
-
-@router.delete("/{post_id}/unlike")
-def unlike_post(post_id: int, user_id: int, db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
-    if not db_post.user_has_liked(db, user_id, post_id):
-        raise HTTPException(status_code=400, detail="User has not liked this post.")
-    return db_post.remove_like(db, user_id, post_id)
-
-@router.get("/{post_id}/likes/count")
-def get_post_likes_count(post_id: int, db: Session = Depends(get_db)):
-    return {"count": db_post.get_like_count(db, post_id)}
-
-
-@router.get("/{post_id}/likes", response_model=LikeListResponse)
-def get_users_liked(post_id: int, db: Session = Depends(get_db)):
-    users = db_post.get_likes_for_post(db, post_id)
-    return {"likes": [{"user_id": user.id, "username": user.username} for user in users]}

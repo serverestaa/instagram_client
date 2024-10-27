@@ -24,6 +24,9 @@ class DbPost(Base):
     user = relationship('DbUser', back_populates='items')
     comments = relationship('DbComment', back_populates='post')
     likes = relationship("DbLike", back_populates="post", cascade="all, delete-orphan")
+    @property
+    def like_count(self):
+        return len(self.likes)
 
 class DbComment(Base):
     __tablename__ = 'comment'
