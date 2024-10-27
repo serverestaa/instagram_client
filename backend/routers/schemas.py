@@ -64,3 +64,11 @@ class CommentBase(BaseModel):
     username: str
     text: str
     post_id: int
+
+
+class UserLike(BaseModel):
+    user_id: int
+    username: str
+
+class LikeListResponse(BaseModel):
+    likes: List[UserLike]
