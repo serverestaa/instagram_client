@@ -1,4 +1,6 @@
 from fastapi import HTTPException, status
+
+from db.db_search import index_data_to_es, create_index_action, es
 from routers.schemas import PostBase
 from sqlalchemy.orm.session import Session
 from sqlalchemy.orm import joinedload
@@ -17,6 +19,11 @@ def create(db: Session, request: PostBase):
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
+    index_data_to_es(db, new_data=create_index_action("posts", new_post.id, {
+        "content": new_post.caption,
+        "timestamp": new_post.timestamp.isoformat(),
+        "username": new_post.user.username
+    }))
     return new_post
 
 
@@ -35,6 +42,11 @@ def delete(db: Session, id: int, user_id: int):
 
     db.delete(post)
     db.commit()
+
+    try:
+        es.delete(index="posts", id=id, ignore=[404])
+    except Exception as e:
+        print(f"Error deleting post from Elasticsearch: {e}")
     return 'ok'
 
 
@@ -45,7 +57,7 @@ def get_posts_by_user_id(db: Session, user_id: int):
 def get_post_by_id(db: Session, post_id: int):
     return (
         db.query(DbPost)
-        .options(joinedload(DbPost.likes).joinedload(DbLike.user))  # Загрузка лайков и пользователей, которые лайкнули
+        .options(joinedload(DbPost.likes).joinedload(DbLike.user))
         .filter(DbPost.id == post_id)
         .first()
     )

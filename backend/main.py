@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from sqlalchemy.sql.functions import user
 from db import models
 from db.database import engine
-from routers import user, post, comment, like, chat
+from routers import user, post, comment, like, chat, search
 from fastapi.staticfiles import StaticFiles
 from auth import authentication
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,6 +17,7 @@ app.include_router(comment.router)
 app.include_router(authentication.router)
 app.include_router(like.router)
 app.include_router(chat.router)
+app.include_router(search.router)
 
 @app.get("/")
 def root():

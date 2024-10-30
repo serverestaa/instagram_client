@@ -1,3 +1,4 @@
+from db.db_search import create_index_action, index_data_to_es
 from db.models import DbUser, DbSubscription
 from routers.schemas import UserBase
 from sqlalchemy.orm.session import Session
@@ -15,6 +16,10 @@ def create_user(db: Session, request: UserBase):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+    index_data_to_es(db, new_data=create_index_action("users", new_user.id, {
+        "username": new_user.username,
+        "email": new_user.email
+    }))
     return new_user
 
 
